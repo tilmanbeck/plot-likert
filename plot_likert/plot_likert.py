@@ -48,6 +48,7 @@ def plot_counts(
     colors: colors.Colors = colors.default,
     figsize=None,
     xtick_interval: typing.Optional[int] = None,
+    plot_bar_labels: bool = False
 ) -> matplotlib.axes.Axes:
     # Pad each row/question from the left, so that they're centered around the middle (Neutral) response
     scale_middle = len(scale) // 2
@@ -74,6 +75,30 @@ def plot_counts(
 
     # Start putting together the plot
     ax = reversed_rows.plot.barh(stacked=True, color=colors, figsize=figsize)
+
+    # add labels to bars
+    if plot_bar_labels:
+        # consider only bar rectangles which are not padding and which have scores > 0
+        consider = []
+        vals = reversed_rows.values.flatten(order='F')
+        for idx, val in enumerate(vals):
+            if idx < len(reversed_rows):
+                # account for padding rectangles
+                consider.append(False)
+            else:
+                # bars with less than 1 vote are not shown, thus ignore
+                if val <= 0:
+                    consider.append(False)
+                else:
+                    consider.append(True)
+        # access rectangle bars
+        reversed_rects = ax.patches
+        for idx, (val, j, rect) in enumerate(zip(vals, consider, reversed_rects)):
+            if j:
+                # place value inside rectangle
+                x = rect.get_x() + rect.get_width()/2.
+                y = rect.get_y() + rect.get_height()/3.
+                ax.text(x, y, str(int(val)), ha='center', va='bottom', color='w')
 
     # Draw center line
     center_line = ax.axvline(center, linestyle="--", color="black", alpha=0.5)
@@ -197,6 +222,7 @@ def plot_likert(
     drop_zeros: bool = False,
     figsize=None,
     xtick_interval: typing.Optional[int] = None,
+    plot_bar_labels: bool = False
 ) -> matplotlib.axes.Axes:
     """
     The purpose of this function is to combine all of the steps into one 'simple' function.
@@ -223,6 +249,7 @@ def plot_likert(
         colors,
         figsize=figsize,
         xtick_interval=xtick_interval,
+        plot_bar_labels=plot_bar_labels
     )
 
 
